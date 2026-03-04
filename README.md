@@ -4,8 +4,8 @@
 
 ![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?style=flat-square&logo=python)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
-![CI](https://img.shields.io/github/actions/workflow/status/SubhadipJana1409/day19-biomarker-shap/ci.yml?style=flat-square&label=CI)
-![Coverage](https://img.shields.io/codecov/c/github/SubhadipJana1409/day19-biomarker-shap?style=flat-square)
+![CI](https://img.shields.io/github/actions/workflow/status/SubhadipJana1409/Biomarker-Discovery-with-SHAP/ci.yml?style=flat-square&label=CI)
+![Coverage](https://img.shields.io/codecov/c/github/SubhadipJana1409/Biomarker-Discovery-with-SHAP?style=flat-square)
 ![30Days](https://img.shields.io/badge/%2330DaysOfBioinformatics-Day%2019%2F30-7c6af7?style=flat-square)
 
 **Use SHAP values to identify which gut microbes are the strongest predictors of IBD — grounded in real published meta-analysis data.**
@@ -90,8 +90,8 @@ CLR Transform                     ← compositionally valid preprocessing
 ### 1. Clone & Install
 
 ```bash
-git clone https://github.com/SubhadipJana1409/day19-biomarker-shap
-cd day19-biomarker-shap
+git clone https://github.com/SubhadipJana1409/Biomarker-Discovery-with-SHAP
+cd Biomarker-Discovery-with-SHAP
 
 python -m venv .venv
 source .venv/bin/activate          # Windows: .venv\Scripts\activate
