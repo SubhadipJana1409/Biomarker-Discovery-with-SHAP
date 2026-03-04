@@ -21,9 +21,7 @@ env/
 .ipynb_checkpoints/
 *.ipynb_checkpoints
 
-# Outputs (generated at runtime — not committed)
-outputs/
-!outputs/.gitkeep
+
 
 # Data (large files — download separately)
 data/raw/
