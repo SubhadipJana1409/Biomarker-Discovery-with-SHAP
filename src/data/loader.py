@@ -11,7 +11,6 @@ from __future__ import annotations
 import logging
 from io import StringIO
 from pathlib import Path
-from typing import Optional
 
 import numpy as np
 import pandas as pd
@@ -97,7 +96,7 @@ def load_duvallet_effects(min_effect: float = 0.01) -> pd.DataFrame:
     """
     df = pd.read_csv(StringIO(_DUVALLET_EFFECTS), sep="\t", index_col=0)
     df["mean_ibd_effect"] = df[IBD_DATASETS].mean(axis=1, skipna=True)
-    df["n_studies"]       = df[IBD_DATASETS].notna().sum(axis=1)
+    df["n_studies"] = df[IBD_DATASETS].notna().sum(axis=1)
     df = df[df["mean_ibd_effect"].notna()]
     df = df[df["mean_ibd_effect"].abs() > min_effect]
     logger.info("Loaded %d genera from Duvallet et al. 2017", len(df))
@@ -131,11 +130,11 @@ def load_custom_data(
     -------
     >>> X, y = load_custom_data("otu_table.csv", "metadata.tsv")
     """
-    otu_path      = Path(otu_path)
+    otu_path = Path(otu_path)
     metadata_path = Path(metadata_path)
 
     sep = "\t" if metadata_path.suffix in (".tsv", ".txt") else ","
-    otu  = pd.read_csv(otu_path, index_col=0)
+    otu = pd.read_csv(otu_path, index_col=0)
     meta = pd.read_csv(metadata_path, sep=sep, index_col=0)
 
     # If OTU is transposed (taxa × samples), flip it
@@ -149,7 +148,7 @@ def load_custom_data(
             "No overlapping sample IDs between OTU table and metadata. "
             "Check that your index column matches."
         )
-    otu  = otu.loc[common]
+    otu = otu.loc[common]
     meta = meta.loc[common]
 
     valid_labels = [positive_class, negative_class]
@@ -159,12 +158,13 @@ def load_custom_data(
             f"No samples found with labels {valid_labels}. "
             f"Available: {meta[label_column].unique().tolist()}"
         )
-    otu  = otu.loc[mask]
-    y    = meta.loc[mask, label_column]
+    otu = otu.loc[mask]
+    y = meta.loc[mask, label_column]
 
     logger.info(
         "Loaded %d samples × %d taxa — %s",
-        otu.shape[0], otu.shape[1],
+        otu.shape[0],
+        otu.shape[1],
         y.value_counts().to_dict(),
     )
     return otu, y
@@ -196,21 +196,20 @@ def simulate_from_effects(
     """
     np.random.seed(random_seed)
     microbes = effects_df.index.tolist()
-    effects  = effects_df["mean_ibd_effect"].values
-    n_half   = n_samples // 2
+    effects = effects_df["mean_ibd_effect"].values
+    n_half = n_samples // 2
 
     def _gen(n, group):
         rows = []
         for _ in range(n):
             abu = []
             for eff in effects:
-                mean = base_mean + (eff * scale if group == "IBD"
-                                    else -max(0, eff) * scale)
+                mean = base_mean + (eff * scale if group == "IBD" else -max(0, eff) * scale)
                 abu.append(max(0.01, np.random.lognormal(mean=mean, sigma=0.8)))
             rows.append(abu)
         return np.array(rows)
 
     X_raw = np.vstack([_gen(n_half, "Healthy"), _gen(n_half, "IBD")])
-    y     = np.array(["Healthy"] * n_half + ["IBD"] * n_half)
+    y = np.array(["Healthy"] * n_half + ["IBD"] * n_half)
     logger.info("Simulated %d samples × %d taxa", X_raw.shape[0], X_raw.shape[1])
     return X_raw, y, microbes

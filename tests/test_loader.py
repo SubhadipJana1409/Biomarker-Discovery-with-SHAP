@@ -2,7 +2,6 @@
 
 import numpy as np
 import pandas as pd
-import pytest
 
 from src.data.loader import load_duvallet_effects, simulate_from_effects
 
@@ -14,8 +13,14 @@ class TestDuvalletLoader:
 
     def test_has_ibd_columns(self):
         df = load_duvallet_effects()
-        for col in ["ibd_papa", "ibd_gevers", "ibd_morgan", "ibd_willing",
-                    "mean_ibd_effect", "n_studies"]:
+        for col in [
+            "ibd_papa",
+            "ibd_gevers",
+            "ibd_morgan",
+            "ibd_willing",
+            "mean_ibd_effect",
+            "n_studies",
+        ]:
             assert col in df.columns
 
     def test_minimum_genera(self):

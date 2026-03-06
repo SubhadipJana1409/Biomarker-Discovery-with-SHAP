@@ -20,43 +20,46 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
 from pathlib import Path
 
 import numpy as np
 
-from src.data.loader    import load_duvallet_effects, load_custom_data, simulate_from_effects
-from src.data.preprocessor import clr_transform, prevalence_filter, prepare_dataset
-from src.models.trainer     import train_models, evaluate_models
-from src.models.shap_analysis import compute_shap, build_biomarker_table
-from src.visualization.plots import (
-    set_style, plot_roc_confusion, plot_biomarker_bar,
-    plot_shap_beeswarm, plot_waterfall, plot_dependency,
-    plot_shap_heatmap, plot_shap_vs_published,
-)
+from src.data.loader import load_custom_data, load_duvallet_effects, simulate_from_effects
+from src.data.preprocessor import prepare_dataset
+from src.models.shap_analysis import build_biomarker_table, compute_shap
+from src.models.trainer import evaluate_models, train_models
 from src.utils.config import load_config
 from src.utils.logger import setup_logging
+from src.visualization.plots import (
+    plot_biomarker_bar,
+    plot_dependency,
+    plot_roc_confusion,
+    plot_shap_beeswarm,
+    plot_shap_heatmap,
+    plot_shap_vs_published,
+    plot_waterfall,
+    set_style,
+)
 
 logger = logging.getLogger(__name__)
 
 
 def parse_args(argv=None):
     p = argparse.ArgumentParser(description="SHAP Biomarker Discovery Pipeline")
-    p.add_argument("--config",         default="configs/config.yaml")
-    p.add_argument("--otu-table",      default=None,
-                   help="Path to OTU table CSV (rows=samples, cols=taxa)")
-    p.add_argument("--metadata",       default=None,
-                   help="Path to sample metadata CSV/TSV")
-    p.add_argument("--label-column",   default="diagnosis")
+    p.add_argument("--config", default="configs/config.yaml")
+    p.add_argument(
+        "--otu-table", default=None, help="Path to OTU table CSV (rows=samples, cols=taxa)"
+    )
+    p.add_argument("--metadata", default=None, help="Path to sample metadata CSV/TSV")
+    p.add_argument("--label-column", default="diagnosis")
     p.add_argument("--positive-class", default="IBD")
-    p.add_argument("--out-dir",        default=None,
-                   help="Override output directory from config")
+    p.add_argument("--out-dir", default=None, help="Override output directory from config")
     return p.parse_args(argv)
 
 
 def main(argv=None):
     args = parse_args(argv)
-    cfg  = load_config(args.config)
+    cfg = load_config(args.config)
     setup_logging(**cfg.get("logging", {}))
     set_style()
 
@@ -70,12 +73,13 @@ def main(argv=None):
     if args.otu_table and args.metadata:
         logger.info("Loading custom data: %s + %s", args.otu_table, args.metadata)
         otu_df, y_raw = load_custom_data(
-            args.otu_table, args.metadata,
-            label_column   = args.label_column,
-            positive_class = args.positive_class,
+            args.otu_table,
+            args.metadata,
+            label_column=args.label_column,
+            positive_class=args.positive_class,
         )
-        X_raw    = otu_df.values.astype(float)
-        y        = y_raw.values
+        X_raw = otu_df.values.astype(float)
+        y = y_raw.values
         microbes = otu_df.columns.tolist()
     else:
         logger.info("Using built-in Duvallet et al. 2017 IBD effect sizes")
@@ -83,26 +87,30 @@ def main(argv=None):
         published_effects = eff_df["mean_ibd_effect"]
         X_raw, y, microbes = simulate_from_effects(
             eff_df,
-            n_samples   = cfg["data"]["n_samples"],
-            random_seed = cfg["data"]["random_seed"],
+            n_samples=cfg["data"]["n_samples"],
+            random_seed=cfg["data"]["random_seed"],
         )
 
     # ── 2. PREPROCESS ────────────────────────────────────────────────────────
     data = prepare_dataset(
-        X_raw, y, microbes,
-        test_size      = cfg["models"]["test_size"],
-        pseudo_count   = cfg["data"]["pseudo_count"],
-        min_prevalence = cfg["data"]["prevalence_filter"],
-        random_seed    = cfg["data"]["random_seed"],
+        X_raw,
+        y,
+        microbes,
+        test_size=cfg["models"]["test_size"],
+        pseudo_count=cfg["data"]["pseudo_count"],
+        min_prevalence=cfg["data"]["prevalence_filter"],
+        random_seed=cfg["data"]["random_seed"],
     )
     feature_names = data["feature_names"]
 
     # ── 3. TRAIN ─────────────────────────────────────────────────────────────
     trained = train_models(
-        data["X_train"], data["y_train"],
-        data["X_clr"],   data["y_enc"],
-        model_cfg = cfg["models"],
-        cv_cfg    = cfg["models"]["cross_validation"],
+        data["X_train"],
+        data["y_train"],
+        data["X_clr"],
+        data["y_enc"],
+        model_cfg=cfg["models"],
+        cv_cfg=cfg["models"]["cross_validation"],
     )
     rf = trained["rf"]
 
@@ -111,9 +119,7 @@ def main(argv=None):
 
     # ── 5. SHAP ──────────────────────────────────────────────────────────────
     shap_ibd, shap_exp, _ = compute_shap(rf, data["X_test"], feature_names)
-    biomarker_df = build_biomarker_table(
-        shap_ibd, feature_names, rf, published_effects
-    )
+    biomarker_df = build_biomarker_table(shap_ibd, feature_names, rf, published_effects)
 
     logger.info("\n🏆 Top 10 Biomarkers:")
     cols = ["Rank", "Taxon", "Mean_SHAP", "SHAP_Direction"]
@@ -125,11 +131,11 @@ def main(argv=None):
     top_taxa = biomarker_df["Taxon"].head(20).tolist()
     ibd_test_idx = int(np.where(data["y_test"] == 1)[0][cfg["shap"]["sample_idx"]])
 
-    plot_roc_confusion(results["fpr"], results["tpr"], results["test_auc"],
-                       results["confusion_matrix"], out_dir)
+    plot_roc_confusion(
+        results["fpr"], results["tpr"], results["test_auc"], results["confusion_matrix"], out_dir
+    )
     plot_biomarker_bar(biomarker_df, out_dir)
-    plot_shap_beeswarm(shap_ibd, data["X_test"], feature_names, out_dir,
-                       cfg["shap"]["max_display"])
+    plot_shap_beeswarm(shap_ibd, data["X_test"], feature_names, out_dir, cfg["shap"]["max_display"])
     plot_waterfall(shap_exp, ibd_test_idx, out_dir)
     plot_dependency(shap_ibd, data["X_test"], feature_names, top_taxa[:4], out_dir)
     plot_shap_heatmap(shap_ibd, data["y_test"], feature_names, top_taxa, out_dir)
