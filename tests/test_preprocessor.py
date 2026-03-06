@@ -1,9 +1,8 @@
 """Unit tests for data preprocessing."""
 
 import numpy as np
-import pytest
 
-from src.data.preprocessor import clr_transform, prevalence_filter, prepare_dataset
+from src.data.preprocessor import clr_transform, prepare_dataset, prevalence_filter
 
 
 class TestCLR:
@@ -25,8 +24,8 @@ class TestCLR:
 class TestPrevalenceFilter:
     def test_removes_rare_taxa(self):
         X = np.zeros((100, 5))
-        X[:, :3] = 1.0          # first 3 taxa present in all samples
-        X[:4, 3] = 1.0          # taxon 3 present in only 4%
+        X[:, :3] = 1.0  # first 3 taxa present in all samples
+        X[:4, 3] = 1.0  # taxon 3 present in only 4%
         names = [f"t{i}" for i in range(5)]
         X_filt, names_filt = prevalence_filter(X, names, min_prevalence=0.05)
         assert X_filt.shape[1] == 3
@@ -46,8 +45,16 @@ class TestPrepareDataset:
         y = np.array(["Healthy"] * 40 + ["IBD"] * 40)
         names = [f"taxon_{i}" for i in range(15)]
         result = prepare_dataset(X, y, names, test_size=0.25)
-        for key in ("X_train", "X_test", "y_train", "y_test",
-                    "X_clr", "y_enc", "feature_names", "label_encoder"):
+        for key in (
+            "X_train",
+            "X_test",
+            "y_train",
+            "y_test",
+            "X_clr",
+            "y_enc",
+            "feature_names",
+            "label_encoder",
+        ):
             assert key in result
 
     def test_split_sizes(self):

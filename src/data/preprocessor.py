@@ -7,7 +7,6 @@ from __future__ import annotations
 import logging
 
 import numpy as np
-import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 
@@ -36,7 +35,7 @@ def clr_transform(X: np.ndarray, pseudo_count: float = 0.5) -> np.ndarray:
     ----------
     Aitchison J. (1986). The Statistical Analysis of Compositional Data.
     """
-    X_pc  = X + pseudo_count
+    X_pc = X + pseudo_count
     log_X = np.log(X_pc)
     return log_X - log_X.mean(axis=1, keepdims=True)
 
@@ -65,7 +64,9 @@ def prevalence_filter(
     kept = int(mask.sum())
     logger.info(
         "Prevalence filter (>= %.0f%%): %d → %d taxa retained",
-        min_prevalence * 100, len(feature_names), kept,
+        min_prevalence * 100,
+        len(feature_names),
+        kept,
     )
     return X[:, mask], [n for n, m in zip(feature_names, mask) if m]
 
@@ -109,7 +110,7 @@ def prepare_dataset(
     logger.info("CLR transform applied (pseudo_count=%.2f)", pseudo_count)
 
     # Encode labels
-    le    = LabelEncoder()
+    le = LabelEncoder()
     y_enc = le.fit_transform(y)
     logger.info("Classes: %s → %s", le.classes_.tolist(), [0, 1])
 
@@ -120,12 +121,12 @@ def prepare_dataset(
     logger.info("Train: %d | Test: %d", len(y_train), len(y_test))
 
     return {
-        "X_train":       X_train,
-        "X_test":        X_test,
-        "y_train":       y_train,
-        "y_test":        y_test,
-        "X_clr":         X_clr,
-        "y_enc":         y_enc,
+        "X_train": X_train,
+        "X_test": X_test,
+        "y_train": y_train,
+        "y_test": y_test,
+        "X_clr": X_clr,
+        "y_enc": y_enc,
         "feature_names": feat_filt,
         "label_encoder": le,
     }

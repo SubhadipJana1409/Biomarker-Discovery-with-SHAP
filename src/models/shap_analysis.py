@@ -52,10 +52,10 @@ def compute_shap(
     )
 
     shap_exp = shap.Explanation(
-        values        = shap_ibd,
-        base_values   = np.full(len(X_test), base_value),
-        data          = X_test,
-        feature_names = feature_names,
+        values=shap_ibd,
+        base_values=np.full(len(X_test), base_value),
+        data=X_test,
+        feature_names=feature_names,
     )
 
     logger.info("SHAP computation complete. Base value: %.4f", base_value)
@@ -86,19 +86,22 @@ def build_biomarker_table(
         RF_Importance, [Published_Effect, Agreement if provided]
     """
     mean_shap = np.abs(shap_ibd).mean(axis=0)
-    df = pd.DataFrame({
-        "Taxon":          feature_names,
-        "Mean_SHAP":      mean_shap,
-        "Median_SHAP":    np.median(np.abs(shap_ibd), axis=0),
-        "SHAP_Direction": ["IBD↑" if shap_ibd[:, i].mean() > 0 else "IBD↓"
-                           for i in range(len(feature_names))],
-        "RF_Importance":  rf.feature_importances_,
-        "Pct_Samples_Active": (np.abs(shap_ibd) > 0.001).mean(axis=0) * 100,
-    })
+    df = pd.DataFrame(
+        {
+            "Taxon": feature_names,
+            "Mean_SHAP": mean_shap,
+            "Median_SHAP": np.median(np.abs(shap_ibd), axis=0),
+            "SHAP_Direction": [
+                "IBD↑" if shap_ibd[:, i].mean() > 0 else "IBD↓" for i in range(len(feature_names))
+            ],
+            "RF_Importance": rf.feature_importances_,
+            "Pct_Samples_Active": (np.abs(shap_ibd) > 0.001).mean(axis=0) * 100,
+        }
+    )
 
     if published_effects is not None:
         df["Published_Effect"] = df["Taxon"].map(published_effects)
-        df["Pub_Direction"]    = df["Published_Effect"].apply(
+        df["Pub_Direction"] = df["Published_Effect"].apply(
             lambda v: "IBD↑" if pd.notna(v) and v > 0 else ("IBD↓" if pd.notna(v) else None)
         )
         df["Agreement"] = df["SHAP_Direction"] == df["Pub_Direction"]

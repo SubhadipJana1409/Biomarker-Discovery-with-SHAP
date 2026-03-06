@@ -1,6 +1,9 @@
 """Config loader — reads YAML and returns a plain dict."""
+
 from __future__ import annotations
+
 from pathlib import Path
+
 import yaml
 
 

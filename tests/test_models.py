@@ -1,17 +1,15 @@
 """Unit tests for model training and SHAP."""
 
-import numpy as np
 import pytest
 from sklearn.datasets import make_classification
 
+from src.models.shap_analysis import build_biomarker_table, compute_shap
 from src.models.trainer import build_random_forest, build_xgboost, evaluate_models
-from src.models.shap_analysis import compute_shap, build_biomarker_table
 
 
 @pytest.fixture
 def toy_data():
-    X, y = make_classification(n_samples=120, n_features=20,
-                                n_informative=8, random_state=42)
+    X, y = make_classification(n_samples=120, n_features=20, n_informative=8, random_state=42)
     split = 90
     return X[:split], X[split:], y[:split], y[split:]
 
